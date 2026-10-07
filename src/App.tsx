@@ -60,6 +60,8 @@ const defaults: Params = {
   shadow: 0.4,
 }
 
+const mediapipeBaseUrl = `${import.meta.env.BASE_URL}mediapipe`
+
 const controls: Array<[keyof Params, string, number, number, number, number]> = [
   ['textScale', 'text size', 0.3, 2.5, 0.01, 2],
   ['spacing', 'spacing', 0, 0.35, 0.005, 3],
@@ -597,17 +599,18 @@ function App() {
 
     async function initialize() {
       try {
-        const vision = await FilesetResolver.forVisionTasks('/mediapipe/wasm')
+        const vision = await FilesetResolver.forVisionTasks(`${mediapipeBaseUrl}/wasm`)
         if (stopped) return
         landmarker = await HandLandmarker.createFromOptions(vision, {
-          baseOptions: { modelAssetPath: '/mediapipe/models/hand_landmarker.task', delegate: 'CPU' },
+          baseOptions: { modelAssetPath: `${mediapipeBaseUrl}/models/hand_landmarker.task`, delegate: 'CPU' },
           runningMode: 'VIDEO', numHands: 1,
           minHandDetectionConfidence: .55, minHandPresenceConfidence: .5, minTrackingConfidence: .5,
         })
         if (stopped) { landmarker.close(); return }
         setHandStatus(cameraChoiceRef.current === 'camera' ? 'READY' : 'NO HAND')
         raf = requestAnimationFrame(tick)
-      } catch {
+      } catch (error) {
+        console.error('Failed to initialize hand tracking', error)
         if (!stopped) setHandStatus('NO HAND')
       }
     }
